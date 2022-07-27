@@ -6,18 +6,21 @@ const pool = new Pool({
   host: 'localhost',
   database: 'bootcampx'
 });
+
 const cohort = process.argv[2];
-const limit = process.argv[3];
+
 pool.query(`
-SELECT students.id, students.name, cohorts.name as cohort
-FROM students
+SELECT DISTINCT teachers.name as teacher, cohorts.name as cohort
+FROM teachers
+JOIN assistance_requests ON teachers.id = assistance_requests.teacher_id
+JOIN students ON assistance_requests.student_id = students.id
 JOIN cohorts ON students.cohort_id = cohorts.id
-WHERE cohorts.name = $1 
-LIMIT $2;
-`, [cohort, limit])
+WHERE cohorts.name = $1
+ORDER BY teachers.name;
+`, [cohort])
 .then(res => {
   res.rows.forEach(user => {
-    console.log(`${user.name} has an id of ${user.id} and was in the ${user.cohort} cohort`);
+    console.log(`${user.cohort}: ${user.teacher}`);
   })
 })
 .catch(err => console.error('query error', err.stack));
